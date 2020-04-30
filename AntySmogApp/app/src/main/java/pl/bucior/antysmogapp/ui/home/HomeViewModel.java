@@ -1,23 +1,27 @@
 package pl.bucior.antysmogapp.ui.home;
 
-import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import java.util.Collections;
+import java.util.List;
+
+import pl.bucior.antysmogapp.api.MeasurementDto;
+
 public class HomeViewModel extends ViewModel {
 
-    private MutableLiveData<String> mText;
+    private MutableLiveData<List<MeasurementDto>> mutableLiveData;
 
     public HomeViewModel() {
-        mText = new MutableLiveData<>();
-        mText.setValue("This is home fragment");
+        mutableLiveData = new MutableLiveData<>();
     }
 
-    public LiveData<String> getText() {
-        return mText;
+    public MutableLiveData<List<MeasurementDto>> getMutableLiveData() {
+        return mutableLiveData;
     }
-    public void setText(String text) {
-        mText.postValue(text);
-        mText.setValue(text);
+
+    public void setMutableLiveData(List<MeasurementDto> list) {
+        Collections.reverse(list);
+        this.mutableLiveData.setValue(list);
     }
 }

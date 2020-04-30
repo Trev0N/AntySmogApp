@@ -13,55 +13,32 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import androidx.annotation.Nullable;
 import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.androidnetworking.AndroidNetworking;
 import com.androidnetworking.common.Priority;
 import com.androidnetworking.error.ANError;
-import com.androidnetworking.interceptors.HttpLoggingInterceptor;
-import com.androidnetworking.interfaces.JSONArrayRequestListener;
-import com.androidnetworking.interfaces.JSONObjectRequestListener;
 import com.androidnetworking.interfaces.ParsedRequestListener;
-import com.androidnetworking.interfaces.StringRequestListener;
-import com.androidnetworking.internal.ANRequestQueue;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.jacksonandroidnetworking.JacksonParserFactory;
 
-import org.apache.http.conn.ssl.AllowAllHostnameVerifier;
 import org.apache.http.conn.ssl.SSLSocketFactory;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
-import javax.net.ssl.HostnameVerifier;
-
 import okhttp3.OkHttpClient;
-import okhttp3.Request;
 import pl.bucior.antysmogapp.R;
 import pl.bucior.antysmogapp.api.MeasurementResponse;
 import pl.bucior.antysmogapp.util.MeasurementTextParser;
@@ -73,23 +50,22 @@ public class HomeFragment extends Fragment {
     public final static String apiKey = "ObUbGJ1Ara4KVOI2mArOdADnOTjkXssK";
     public final static String url = "https://airapi.airly.eu/";
 
-    private HomeViewModel homeViewModel;
     private TextView textView, addressTextView, measurementText;
     private FusedLocationProviderClient mFusedLocationClient;
     private Location locationToCheck = null;
     private int PERMISSION_ID = 44;
     private MeasurementResponse measurementResponse;
+    private HomeViewModel homeViewModel;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        homeViewModel =
-                ViewModelProviders.of(this).get(HomeViewModel.class);
+        homeViewModel = ViewModelProviders.of(requireActivity()).get(HomeViewModel.class);
         View root = inflater.inflate(R.layout.fragment_home, container, false);
         textView = root.findViewById(R.id.text_home);
         addressTextView = root.findViewById(R.id.textView4);
         measurementText = root.findViewById(R.id.measurementText);
         checkAndRequestPermissions();
-        if(locationToCheck==null) {
+        if (locationToCheck == null) {
             getLocationAndSetDataOnUi();
         }
 
@@ -109,19 +85,21 @@ public class HomeFragment extends Fragment {
         AndroidNetworking.get(airUrl)
                 .addHeaders("Accept", "*/*")
                 .addHeaders("apikey", apiKey)
-                .addHeaders("accept-language","pl-PL")
+                .addHeaders("accept-language", "pl-PL")
                 .addHeaders("Host", "airapi.airly.eu")
                 .setPriority(Priority.HIGH)
                 .setOkHttpClient(okHttpClient)
                 .build()
-                .getAsObject(MeasurementResponse.class,new ParsedRequestListener<MeasurementResponse>() {
+                .getAsObject(MeasurementResponse.class, new ParsedRequestListener<MeasurementResponse>() {
                     @SuppressLint("NewApi")
                     @Override
                     public void onResponse(MeasurementResponse response) {
                         measurementResponse = response;
                         Log.i(TAG, "onResponse: " + response.getCurrent().toString());
                         measurementText.setText(MeasurementTextParser.parseToScreen(measurementResponse.getCurrent()));
+                        homeViewModel.setMutableLiveData(measurementResponse.getHistory());
                     }
+
                     @Override
                     public void onError(ANError anError) {
                         Log.d(TAG, "onResponse: " + anError.toString());
