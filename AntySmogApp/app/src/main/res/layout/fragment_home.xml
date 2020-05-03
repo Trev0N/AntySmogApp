@@ -6,17 +6,16 @@
     android:layout_height="match_parent">
 
     <TextView
-        android:id="@+id/text_home"
-        android:layout_width="match_parent"
+        android:id="@+id/home_coordinates"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="72dp"
+        android:layout_marginTop="20dp"
         android:textAlignment="center"
         android:textAppearance="@style/TextAppearance.AppCompat.Display4"
         android:textSize="20sp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/textView2" />
 
     <TextView
         android:id="@+id/textView2"
@@ -42,10 +41,10 @@
         android:textSize="20sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/text_home" />
+        app:layout_constraintTop_toBottomOf="@+id/home_coordinates" />
 
     <TextView
-        android:id="@+id/textView4"
+        android:id="@+id/home_address"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="39dp"
@@ -67,17 +66,164 @@
         android:textSize="22sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView4" />
+        app:layout_constraintTop_toBottomOf="@+id/home_address" />
 
-    <TextView
-        android:id="@+id/measurementText"
+    <LinearLayout
+        android:id="@+id/linearLayout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="54dp"
-        android:gravity="center|center_horizontal"
+        android:layout_marginBottom="30dp"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toTopOf="@+id/home_grade"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <LinearLayout
+            android:layout_width="200dp"
+            android:layout_height="match_parent"
+            android:layout_marginLeft="14dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/home_textPM1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/PM1"
+                android:textAppearance="@style/TextAppearance.AppCompat.Display4"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/home_textPM25"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/PM25"
+                android:textAppearance="@style/TextAppearance.AppCompat.Display4"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/home_textPM10"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/PM10"
+                android:textAppearance="@style/TextAppearance.AppCompat.Display4"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/home_textPressure"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/pressure"
+                android:textAppearance="@style/TextAppearance.AppCompat.Display4"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/home_textHumidity"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/humidity"
+                android:textAppearance="@style/TextAppearance.AppCompat.Display4"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/home_textTemperature"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/temperature"
+                android:textAppearance="@style/TextAppearance.AppCompat.Display4"
+                android:textSize="20sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/home_textToPM1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/no_data"
+                android:textAppearance="@style/TextAppearance.AppCompat.Display4"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/home_textToPM25"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/no_data"
+                android:textAppearance="@style/TextAppearance.AppCompat.Display4"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/home_textToPM10"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/no_data"
+                android:textAppearance="@style/TextAppearance.AppCompat.Display4"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/home_textToPressure"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/no_data"
+                android:textAppearance="@style/TextAppearance.AppCompat.Display4"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/home_textToHumidity"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/no_data"
+                android:textAppearance="@style/TextAppearance.AppCompat.Display4"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/home_textToTemperature"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/no_data"
+                android:textAppearance="@style/TextAppearance.AppCompat.Display4"
+                android:textSize="20sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/home_grade"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="17dp"
+        android:gravity="center"
+        android:text="@string/no_data"
         android:textAppearance="@style/TextAppearance.AppCompat.Display4"
         android:textSize="22sp"
+        app:layout_constraintBottom_toTopOf="@+id/home_ratingBar"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView5" />
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <RatingBar
+        android:id="@+id/home_ratingBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:progressTint="#FFDF00"
+        android:isIndicator="true"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toTopOf="@+id/home_tip"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/home_tip"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="64dp"
+        android:gravity="center"
+        android:text="@string/no_data"
+        android:textAppearance="@style/TextAppearance.AppCompat.Display4"
+        android:textSize="22sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

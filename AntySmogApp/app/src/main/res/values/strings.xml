@@ -25,4 +25,11 @@
     <string name="textPressure">Ciśnienie:</string>
     <string name="textHumidity">Wilgotność:</string>
     <string name="textTemp">Temperatura:</string>
+    <string name="no_data">b/d</string>
+    <string name="PM1">Stężenie PM1</string>
+    <string name="PM25">Stężenie PM2.5</string>
+    <string name="PM10">Stężenie PM10</string>
+    <string name="pressure">Ciśnienie</string>
+    <string name="humidity">Wilgotność</string>
+    <string name="temperature">Temperatura</string>
 </resources>

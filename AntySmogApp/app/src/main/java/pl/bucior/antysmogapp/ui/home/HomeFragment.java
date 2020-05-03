@@ -6,15 +6,18 @@ import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.RatingBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
@@ -28,7 +31,6 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.OnSuccessListener;
 
 import org.apache.http.conn.ssl.SSLSocketFactory;
 
@@ -40,20 +42,22 @@ import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
 import pl.bucior.antysmogapp.R;
+import pl.bucior.antysmogapp.api.DataDto;
+import pl.bucior.antysmogapp.api.MeasurementDto;
 import pl.bucior.antysmogapp.api.MeasurementResponse;
-import pl.bucior.antysmogapp.util.MeasurementTextParser;
 
 import static androidx.constraintlayout.widget.Constraints.TAG;
 
 public class HomeFragment extends Fragment {
 
-    public final static String apiKey = "ObUbGJ1Ara4KVOI2mArOdADnOTjkXssK";
-    public final static String url = "https://airapi.airly.eu/";
+    private final static String apiKey = "ObUbGJ1Ara4KVOI2mArOdADnOTjkXssK";
+    private final static String url = "https://airapi.airly.eu/";
 
-    private TextView textView, addressTextView, measurementText;
+    private RatingBar homeRatingBar;
+    private TextView homeCoordiantes, homeAddress, homePM1, homePM25, homePM10, homeHumidity, homePressure, homeTemperature, homeGrade, homeTip;
     private FusedLocationProviderClient mFusedLocationClient;
     private Location locationToCheck = null;
-    private int PERMISSION_ID = 44;
+    private final static int PERMISSION_ID = 44;
     private MeasurementResponse measurementResponse;
     private HomeViewModel homeViewModel;
 
@@ -61,9 +65,17 @@ public class HomeFragment extends Fragment {
                              ViewGroup container, Bundle savedInstanceState) {
         homeViewModel = ViewModelProviders.of(requireActivity()).get(HomeViewModel.class);
         View root = inflater.inflate(R.layout.fragment_home, container, false);
-        textView = root.findViewById(R.id.text_home);
-        addressTextView = root.findViewById(R.id.textView4);
-        measurementText = root.findViewById(R.id.measurementText);
+        homeCoordiantes = root.findViewById(R.id.home_coordinates);
+        homeAddress = root.findViewById(R.id.home_address);
+        homePM1 = root.findViewById(R.id.home_textToPM1);
+        homePM10 = root.findViewById(R.id.home_textToPM10);
+        homePM25 = root.findViewById(R.id.home_textToPM25);
+        homeHumidity = root.findViewById(R.id.home_textToHumidity);
+        homePressure = root.findViewById(R.id.home_textToPressure);
+        homeTemperature = root.findViewById(R.id.home_textToTemperature);
+        homeGrade = root.findViewById(R.id.home_grade);
+        homeTip = root.findViewById(R.id.home_tip);
+        homeRatingBar = root.findViewById(R.id.home_ratingBar);
         checkAndRequestPermissions();
         if (locationToCheck == null) {
             getLocationAndSetDataOnUi();
@@ -96,7 +108,7 @@ public class HomeFragment extends Fragment {
                     public void onResponse(MeasurementResponse response) {
                         measurementResponse = response;
                         Log.i(TAG, "onResponse: " + response.getCurrent().toString());
-                        measurementText.setText(MeasurementTextParser.parseToScreen(measurementResponse.getCurrent()));
+                        updateUI(measurementResponse.getCurrent());
                         homeViewModel.setMutableLiveData(measurementResponse.getHistory());
                     }
 
@@ -108,34 +120,39 @@ public class HomeFragment extends Fragment {
 
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    public void updateUI(MeasurementDto measurementDto) {
+        homePM1.setText(String.format(new Locale("PL"), "%s µg/m³", measurementDto.getValues().stream().filter(m -> m.getName().equals("PM1")).findAny().orElse(new DataDto("PM1", null)).getValue()));
+        homePM25.setText(String.format(new Locale("PL"), "%s µg/m³", measurementDto.getValues().stream().filter(m -> m.getName().equals("PM25")).findAny().orElse(new DataDto("PM25", null)).getValue()));
+        homePM10.setText(String.format(new Locale("PL"), "%s µg/m³", measurementDto.getValues().stream().filter(m -> m.getName().equals("PM10")).findAny().orElse(new DataDto("PM10", null)).getValue()));
+        homePressure.setText(String.format(new Locale("PL"), "%s hPa", measurementDto.getValues().stream().filter(m -> m.getName().equals("PRESSURE")).findAny().orElse(new DataDto("PRESSURE", null)).getValue()));
+        homeHumidity.setText(String.format(new Locale("PL"), "%s %%", measurementDto.getValues().stream().filter(m -> m.getName().equals("HUMIDITY")).findAny().orElse(new DataDto("HUMIDITY", null)).getValue()));
+        homeTemperature.setText(String.format(new Locale("PL"), "%s %%", measurementDto.getValues().stream().filter(m -> m.getName().equals("TEMPERATURE")).findAny().orElse(new DataDto("TEMPERATURE", null)).getValue()));
+        homeGrade.setText(String.format(new Locale("PL"), "%s", measurementDto.getIndexes().size() > 0 ? measurementDto.getIndexes().get(0).getDescription() : "b/d"));
+        homeTip.setText(String.format(new Locale("PL"), "%s", measurementDto.getIndexes().size() > 0 ? measurementDto.getIndexes().get(0).getAdvice() : "b/d"));
+        homeRatingBar.setRating(measurementDto.getIndexes().size()>0?100f - measurementDto.getIndexes().get(0).getValue().floatValue():0f);
+    }
 
     public void getLocationAndSetDataOnUi() {
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
         mFusedLocationClient.getLastLocation()
-                .addOnSuccessListener(requireActivity(), new OnSuccessListener<Location>() {
-                    @Override
-                    public void onSuccess(Location location) {
-                        // Got last known location. In some rare situations this can be null.
-                        if (location != null) {
-                            // Logic to handle location object
-
-                            textView.setText(location.getLatitude() + ", " + location.getLongitude());
-                            getNearestInstalltionByLocation(location.getLatitude(), location.getLongitude());
-                            Geocoder gcd = new Geocoder(requireContext(),
-                                    Locale.getDefault());
-                            try {
-                                List<Address> addressList = gcd.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
-                                if (addressList.size() > 0) {
-                                    Address address = addressList.get(0);
-                                    addressTextView.setText(String.format("%s, %s %s, ul. %s %s", address.getCountryName(), address.getLocality(),
-                                            address.getPostalCode(), address.getThoroughfare(), address.getSubThoroughfare()));
-                                }
-                            } catch (IOException e) {
-                                Log.d(TAG, "onSuccess: " + e);
-                                e.printStackTrace();
+                .addOnSuccessListener(requireActivity(), location -> {
+                    if (location != null) {
+                        homeCoordiantes.setText(String.format("%s, %s", location.getLatitude(), location.getLongitude()));
+                        getNearestInstalltionByLocation(location.getLatitude(), location.getLongitude());
+                        Geocoder gcd = new Geocoder(requireContext(), Locale.getDefault());
+                        try {
+                            List<Address> addressList = gcd.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
+                            if (addressList.size() > 0) {
+                                Address address = addressList.get(0);
+                                homeAddress.setText(String.format("%s, %s %s, ul. %s %s", address.getCountryName(), address.getLocality(),
+                                        address.getPostalCode(), address.getThoroughfare(), address.getSubThoroughfare()));
                             }
-                            locationToCheck = location;
+                        } catch (IOException e) {
+                            Log.d(TAG, "onSuccess: " + e);
+                            e.printStackTrace();
                         }
+                        locationToCheck = location;
                     }
                 });
     }
