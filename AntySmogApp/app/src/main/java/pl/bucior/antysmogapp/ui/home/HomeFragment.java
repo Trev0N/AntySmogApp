@@ -6,9 +6,9 @@ import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -27,9 +27,6 @@ import com.androidnetworking.common.Priority;
 import com.androidnetworking.error.ANError;
 import com.androidnetworking.interfaces.ParsedRequestListener;
 import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 
 import org.apache.http.conn.ssl.SSLSocketFactory;
@@ -55,7 +52,6 @@ public class HomeFragment extends Fragment {
 
     private RatingBar homeRatingBar;
     private TextView homeCoordiantes, homeAddress, homePM1, homePM25, homePM10, homeHumidity, homePressure, homeTemperature, homeGrade, homeTip;
-    private FusedLocationProviderClient mFusedLocationClient;
     private Location locationToCheck = null;
     private final static int PERMISSION_ID = 44;
     private MeasurementResponse measurementResponse;
@@ -63,6 +59,7 @@ public class HomeFragment extends Fragment {
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
+
         homeViewModel = ViewModelProviders.of(requireActivity()).get(HomeViewModel.class);
         View root = inflater.inflate(R.layout.fragment_home, container, false);
         homeCoordiantes = root.findViewById(R.id.home_coordinates);
@@ -84,39 +81,47 @@ public class HomeFragment extends Fragment {
         return root;
     }
 
-    public void getNearestInstalltionByLocation(double latitude, double longitude) {
-        OkHttpClient okHttpClient = new OkHttpClient().newBuilder()
-                .connectTimeout(120, TimeUnit.SECONDS)
-                .readTimeout(120, TimeUnit.SECONDS)
-                .writeTimeout(120, TimeUnit.SECONDS)
-                .hostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER)
-                .build();
-        AndroidNetworking.initialize(requireContext(), okHttpClient);
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    public void getNearestMeasurementByLocation(double latitude, double longitude) {
+        if (homeViewModel.getMutableLiveData().getValue() != null &&
+                homeViewModel.getMutableLiveData().getValue().size() > 0) {
+            updateUI(homeViewModel.getMutableLiveData().getValue().get(0));
+        } else {
+            AsyncTask.execute(() -> {
+                OkHttpClient okHttpClient = new OkHttpClient().newBuilder()
+                        .connectTimeout(120, TimeUnit.SECONDS)
+                        .readTimeout(120, TimeUnit.SECONDS)
+                        .writeTimeout(120, TimeUnit.SECONDS)
+                        .hostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER)
+                        .build();
+                AndroidNetworking.initialize(requireContext(), okHttpClient);
 
-        final String airUrl = url + "v2/measurements/nearest?lat=" + latitude + "&lng=" + longitude + "&maxDistanceKM=5";
-        AndroidNetworking.get(airUrl)
-                .addHeaders("Accept", "*/*")
-                .addHeaders("apikey", apiKey)
-                .addHeaders("accept-language", "pl-PL")
-                .addHeaders("Host", "airapi.airly.eu")
-                .setPriority(Priority.HIGH)
-                .setOkHttpClient(okHttpClient)
-                .build()
-                .getAsObject(MeasurementResponse.class, new ParsedRequestListener<MeasurementResponse>() {
-                    @SuppressLint("NewApi")
-                    @Override
-                    public void onResponse(MeasurementResponse response) {
-                        measurementResponse = response;
-                        Log.i(TAG, "onResponse: " + response.getCurrent().toString());
-                        updateUI(measurementResponse.getCurrent());
-                        homeViewModel.setMutableLiveData(measurementResponse.getHistory());
-                    }
+                final String airUrl = url + "v2/measurements/nearest?lat=" + latitude + "&lng=" + longitude + "&maxDistanceKM=5";
+                AndroidNetworking.get(airUrl)
+                        .addHeaders("Accept", "*/*")
+                        .addHeaders("apikey", apiKey)
+                        .addHeaders("accept-language", "pl-PL")
+                        .addHeaders("Host", "airapi.airly.eu")
+                        .setPriority(Priority.HIGH)
+                        .setOkHttpClient(okHttpClient)
+                        .build()
+                        .getAsObject(MeasurementResponse.class, new ParsedRequestListener<MeasurementResponse>() {
+                            @SuppressLint("NewApi")
+                            @Override
+                            public void onResponse(MeasurementResponse response) {
+                                measurementResponse = response;
+                                Log.i(TAG, "onResponse: " + response.getCurrent().toString());
+                                updateUI(measurementResponse.getCurrent());
+                                homeViewModel.setMutableLiveData(measurementResponse.getHistory());
+                            }
 
-                    @Override
-                    public void onError(ANError anError) {
-                        Log.d(TAG, "onResponse: " + anError.toString());
-                    }
-                });
+                            @Override
+                            public void onError(ANError anError) {
+                                Log.d(TAG, "onResponse: " + anError.toString());
+                            }
+                        });
+            });
+        }
 
     }
 
@@ -127,19 +132,19 @@ public class HomeFragment extends Fragment {
         homePM10.setText(String.format(new Locale("PL"), "%s µg/m³", measurementDto.getValues().stream().filter(m -> m.getName().equals("PM10")).findAny().orElse(new DataDto("PM10", null)).getValue()));
         homePressure.setText(String.format(new Locale("PL"), "%s hPa", measurementDto.getValues().stream().filter(m -> m.getName().equals("PRESSURE")).findAny().orElse(new DataDto("PRESSURE", null)).getValue()));
         homeHumidity.setText(String.format(new Locale("PL"), "%s %%", measurementDto.getValues().stream().filter(m -> m.getName().equals("HUMIDITY")).findAny().orElse(new DataDto("HUMIDITY", null)).getValue()));
-        homeTemperature.setText(String.format(new Locale("PL"), "%s %%", measurementDto.getValues().stream().filter(m -> m.getName().equals("TEMPERATURE")).findAny().orElse(new DataDto("TEMPERATURE", null)).getValue()));
+        homeTemperature.setText(String.format(new Locale("PL"), "%s °C", measurementDto.getValues().stream().filter(m -> m.getName().equals("TEMPERATURE")).findAny().orElse(new DataDto("TEMPERATURE", null)).getValue()));
         homeGrade.setText(String.format(new Locale("PL"), "%s", measurementDto.getIndexes().size() > 0 ? measurementDto.getIndexes().get(0).getDescription() : "b/d"));
         homeTip.setText(String.format(new Locale("PL"), "%s", measurementDto.getIndexes().size() > 0 ? measurementDto.getIndexes().get(0).getAdvice() : "b/d"));
-        homeRatingBar.setRating(measurementDto.getIndexes().size()>0?100f - measurementDto.getIndexes().get(0).getValue().floatValue():0f);
+        homeRatingBar.setRating(measurementDto.getIndexes().size() > 0 ? (100f - measurementDto.getIndexes().get(0).getValue().floatValue()) / 20f : 0f);
     }
 
     public void getLocationAndSetDataOnUi() {
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
+        FusedLocationProviderClient mFusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
         mFusedLocationClient.getLastLocation()
                 .addOnSuccessListener(requireActivity(), location -> {
                     if (location != null) {
                         homeCoordiantes.setText(String.format("%s, %s", location.getLatitude(), location.getLongitude()));
-                        getNearestInstalltionByLocation(location.getLatitude(), location.getLongitude());
+                        getNearestMeasurementByLocation(location.getLatitude(), location.getLongitude());
                         Geocoder gcd = new Geocoder(requireContext(), Locale.getDefault());
                         try {
                             List<Address> addressList = gcd.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
@@ -189,29 +194,5 @@ public class HomeFragment extends Fragment {
             );
         }
     }
-
-    private LocationCallback mLocationCallback = new LocationCallback() {
-        @Override
-        public void onLocationResult(LocationResult locationResult) {
-            Location mLastLocation = locationResult.getLastLocation();
-        }
-    };
-
-    private void requestNewLocationData() {
-
-        LocationRequest mLocationRequest = new LocationRequest();
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        mLocationRequest.setInterval(0);
-        mLocationRequest.setFastestInterval(0);
-        mLocationRequest.setNumUpdates(1);
-
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
-        mFusedLocationClient.requestLocationUpdates(
-                mLocationRequest, mLocationCallback,
-                Looper.myLooper()
-        );
-
-    }
-
 
 }

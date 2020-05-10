@@ -9,7 +9,7 @@
 
     <string name="menu_home">Strona główna</string>
     <string name="menu_history">Historia</string>
-    <string name="menu_slideshow">Slideshow</string>
+    <string name="menu_notification">Powiadomienia</string>
     <string name="menu_tools">Tools</string>
     <string name="menu_share">Share</string>
     <string name="menu_send">Send</string>
@@ -32,4 +32,6 @@
     <string name="pressure">Ciśnienie</string>
     <string name="humidity">Wilgotność</string>
     <string name="temperature">Temperatura</string>
+    <string name="question_notification">Czy chcesz otrzymywać powiadomienia o złej jakości powietrza?</string>
+    <string name="notification_value">Wpisz wartość w % dla jakiej chcesz otrzymać powiadomienie</string>
 </resources>
