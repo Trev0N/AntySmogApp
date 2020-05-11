@@ -13,6 +13,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.RatingBar;
 import android.widget.TextView;
 
@@ -51,7 +53,9 @@ public class HomeFragment extends Fragment {
     private final static String url = "https://airapi.airly.eu/";
 
     private RatingBar homeRatingBar;
-    private TextView homeCoordiantes, homeAddress, homePM1, homePM25, homePM10, homeHumidity, homePressure, homeTemperature, homeGrade, homeTip;
+    private TextView homeAddress, homePM1, homePM25, homePM10, homeHumidity, homePressure, homeTemperature, homeGrade, homeTip, homeQualityTip;
+    private EditText homeCityText;
+    private ImageButton imageButton;
     private Location locationToCheck = null;
     private final static int PERMISSION_ID = 44;
     private MeasurementResponse measurementResponse;
@@ -62,7 +66,6 @@ public class HomeFragment extends Fragment {
 
         homeViewModel = ViewModelProviders.of(requireActivity()).get(HomeViewModel.class);
         View root = inflater.inflate(R.layout.fragment_home, container, false);
-        homeCoordiantes = root.findViewById(R.id.home_coordinates);
         homeAddress = root.findViewById(R.id.home_address);
         homePM1 = root.findViewById(R.id.home_textToPM1);
         homePM10 = root.findViewById(R.id.home_textToPM10);
@@ -73,11 +76,14 @@ public class HomeFragment extends Fragment {
         homeGrade = root.findViewById(R.id.home_grade);
         homeTip = root.findViewById(R.id.home_tip);
         homeRatingBar = root.findViewById(R.id.home_ratingBar);
+        homeCityText = root.findViewById(R.id.homeCityText);
+        imageButton = root.findViewById(R.id.imageButton);
+        homeQualityTip = root.findViewById(R.id.home_quality_tip);
         checkAndRequestPermissions();
         if (locationToCheck == null) {
             getLocationAndSetDataOnUi();
         }
-
+        findLocationByCity();
         return root;
     }
 
@@ -127,15 +133,56 @@ public class HomeFragment extends Fragment {
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     public void updateUI(MeasurementDto measurementDto) {
-        homePM1.setText(String.format(new Locale("PL"), "%s µg/m³", measurementDto.getValues().stream().filter(m -> m.getName().equals("PM1")).findAny().orElse(new DataDto("PM1", null)).getValue()));
-        homePM25.setText(String.format(new Locale("PL"), "%s µg/m³", measurementDto.getValues().stream().filter(m -> m.getName().equals("PM25")).findAny().orElse(new DataDto("PM25", null)).getValue()));
-        homePM10.setText(String.format(new Locale("PL"), "%s µg/m³", measurementDto.getValues().stream().filter(m -> m.getName().equals("PM10")).findAny().orElse(new DataDto("PM10", null)).getValue()));
-        homePressure.setText(String.format(new Locale("PL"), "%s hPa", measurementDto.getValues().stream().filter(m -> m.getName().equals("PRESSURE")).findAny().orElse(new DataDto("PRESSURE", null)).getValue()));
-        homeHumidity.setText(String.format(new Locale("PL"), "%s %%", measurementDto.getValues().stream().filter(m -> m.getName().equals("HUMIDITY")).findAny().orElse(new DataDto("HUMIDITY", null)).getValue()));
-        homeTemperature.setText(String.format(new Locale("PL"), "%s °C", measurementDto.getValues().stream().filter(m -> m.getName().equals("TEMPERATURE")).findAny().orElse(new DataDto("TEMPERATURE", null)).getValue()));
-        homeGrade.setText(String.format(new Locale("PL"), "%s", measurementDto.getIndexes().size() > 0 ? measurementDto.getIndexes().get(0).getDescription() : "b/d"));
-        homeTip.setText(String.format(new Locale("PL"), "%s", measurementDto.getIndexes().size() > 0 ? measurementDto.getIndexes().get(0).getAdvice() : "b/d"));
-        homeRatingBar.setRating(measurementDto.getIndexes().size() > 0 ? (100f - measurementDto.getIndexes().get(0).getValue().floatValue()) / 20f : 0f);
+        if (measurementDto.getValues().size() > 0) {
+            homePM1.setText(String.format(new Locale("PL"), "%s µg/m³", measurementDto.getValues().stream().filter(m -> m.getName().equals("PM1")).findAny().orElse(new DataDto("PM1", null)).getValue()));
+            homePM25.setText(String.format(new Locale("PL"), "%s µg/m³", measurementDto.getValues().stream().filter(m -> m.getName().equals("PM25")).findAny().orElse(new DataDto("PM25", null)).getValue()));
+            homePM10.setText(String.format(new Locale("PL"), "%s µg/m³", measurementDto.getValues().stream().filter(m -> m.getName().equals("PM10")).findAny().orElse(new DataDto("PM10", null)).getValue()));
+            homePressure.setText(String.format(new Locale("PL"), "%s hPa", measurementDto.getValues().stream().filter(m -> m.getName().equals("PRESSURE")).findAny().orElse(new DataDto("PRESSURE", null)).getValue()));
+            homeHumidity.setText(String.format(new Locale("PL"), "%s %%", measurementDto.getValues().stream().filter(m -> m.getName().equals("HUMIDITY")).findAny().orElse(new DataDto("HUMIDITY", null)).getValue()));
+            homeTemperature.setText(String.format(new Locale("PL"), "%s °C", measurementDto.getValues().stream().filter(m -> m.getName().equals("TEMPERATURE")).findAny().orElse(new DataDto("TEMPERATURE", null)).getValue()));
+            homeGrade.setText(String.format(new Locale("PL"), "%s", measurementDto.getIndexes().size() > 0 ? measurementDto.getIndexes().get(0).getDescription() : "b/d"));
+            homeTip.setText(String.format(new Locale("PL"), "%s", measurementDto.getIndexes().size() > 0 ? measurementDto.getIndexes().get(0).getAdvice() : "b/d"));
+            homeRatingBar.setRating(measurementDto.getIndexes().size() > 0 ? (100f - measurementDto.getIndexes().get(0).getValue().floatValue()) / 20f : 0f);
+            eliminateNulls();
+        } else {
+            homePM1.setText(R.string.no_data);
+            homePM25.setText(R.string.no_data);
+            homePM10.setText(R.string.no_data);
+            homePressure.setText(R.string.no_data);
+            homeHumidity.setText(R.string.no_data);
+            homeTemperature.setText(R.string.no_data);
+            homeGrade.setText(R.string.no_data);
+            homeTip.setText(R.string.no_data);
+            homeRatingBar.setRating(0f);
+
+        }
+    }
+
+    public void eliminateNulls(){
+        if(homePM1.getText().toString().contains("null")){
+            homePM1.setText(R.string.no_data);
+        }
+        if(homePM25.getText().toString().contains("null")){
+            homePM25.setText(R.string.no_data);
+        }
+        if (homePM10.getText().toString().contains("null")) {
+            homePM10.setText(R.string.no_data);
+        }
+        if (homePressure.getText().toString().contains("null")) {
+            homePressure.setText(R.string.no_data);
+        }
+        if (homeHumidity.getText().toString().contains("null")) {
+            homeHumidity.setText(R.string.no_data);
+        }
+        if (homeTemperature.getText().toString().contains("null")) {
+            homeTemperature.setText(R.string.no_data);
+        }
+        if (homeGrade.getText().toString().contains("null")) {
+            homeGrade.setText(R.string.no_data);
+        }
+        if (homeTip.getText().toString().contains("null")) {
+            homeTip.setText(R.string.no_data);
+        }
     }
 
     public void getLocationAndSetDataOnUi() {
@@ -143,7 +190,6 @@ public class HomeFragment extends Fragment {
         mFusedLocationClient.getLastLocation()
                 .addOnSuccessListener(requireActivity(), location -> {
                     if (location != null) {
-                        homeCoordiantes.setText(String.format("%s, %s", location.getLatitude(), location.getLongitude()));
                         getNearestMeasurementByLocation(location.getLatitude(), location.getLongitude());
                         Geocoder gcd = new Geocoder(requireContext(), Locale.getDefault());
                         try {
@@ -193,6 +239,26 @@ public class HomeFragment extends Fragment {
                     PERMISSION_ID
             );
         }
+    }
+
+    public void findLocationByCity() {
+        imageButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Geocoder gcd = new Geocoder(requireContext(), Locale.getDefault());
+                try {
+
+                    List<Address> address = gcd.getFromLocationName(String.valueOf(homeCityText.getText()), 1);
+                    if (address.size() > 0) {
+                        homeViewModel.setMutableLiveData(new ArrayList<>());
+                        getNearestMeasurementByLocation(address.get(0).getLatitude(), address.get(0).getLongitude());
+                        homeQualityTip.setText(String.format("Wyświetlanie dla miejscowości %s", address.get(0).getLocality()));
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
 }

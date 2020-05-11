@@ -34,4 +34,8 @@
     <string name="temperature">Temperatura</string>
     <string name="question_notification">Czy chcesz otrzymywać powiadomienia o złej jakości powietrza?</string>
     <string name="notification_value">Wpisz wartość w % dla jakiej chcesz otrzymać powiadomienie</string>
+    <string name="notification_description">0% = najlepsze powietrze 100% = najgorsze powietrze</string>
+    <string name="home_city">Wpisz nazwę miejscowości</string>
+    <string name="home_ad" >Jeśli chcesz to możesz sprawdzić jakość powietrza w innym miejscu!</string>
+    <string name="home_location_show">Wyświetlanie dla twojej lokalizacji</string>
 </resources>

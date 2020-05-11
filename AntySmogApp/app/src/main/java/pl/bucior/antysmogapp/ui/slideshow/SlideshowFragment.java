@@ -11,16 +11,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.Switch;
-import android.widget.TextView;
 
-import androidx.annotation.Nullable;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
-
-import java.util.Map;
-import java.util.Objects;
 
 import pl.bucior.antysmogapp.R;
 import pl.bucior.antysmogapp.util.LocationService;
@@ -77,8 +73,14 @@ public class SlideshowFragment extends Fragment {
 
             @Override
             public void afterTextChanged(Editable s) {
-                if(s.length()>0 && Integer.parseInt(notificationPercent.getText().toString())<100) {
-                    editor.putInt("Notification_value", Integer.parseInt(notificationPercent.getText().toString()));
+                if(s.length()>0) {
+                    int notificationPercentValue = Integer.parseInt(notificationPercent.getText().toString());
+                    if(notificationPercentValue>100){
+                        s.clear();
+                        s.append("100");
+                        notificationPercentValue=100;
+                    }
+                    editor.putInt("Notification_value", notificationPercentValue);
                     editor.apply();
                 }
             }
