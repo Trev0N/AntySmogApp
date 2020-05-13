@@ -60,6 +60,7 @@ public class LocationService extends Service implements
         super.onCreate();
         sharedPreferences = this.getSharedPreferences("NotificationPreferences", Context.MODE_PRIVATE);
         if(sharedPreferences.getBoolean("Notification",false)) {
+            isServiceRunning=false;
             startServiceAndSendNotification("AntySmogApp","Aplikacja działa w tle", false);
         }
     }
@@ -129,9 +130,9 @@ public class LocationService extends Service implements
     }
 
     public static double distance(double lat1, double lat2, double lon1,
-                                  double lon2, double el1, double el2) {
+                                  double lon2) {
 
-        final int R = 6371; // Radius of the earth
+        final int R = 6371;
 
         double latDistance = Math.toRadians(lat2 - lat1);
         double lonDistance = Math.toRadians(lon2 - lon1);
@@ -139,11 +140,9 @@ public class LocationService extends Service implements
                 + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
                 * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        double distance = R * c * 1000; // convert to meters
+        double distance = R * c * 1000;
 
-        double height = el1 - el2;
-
-        distance = Math.pow(distance, 2) + Math.pow(height, 2);
+        distance = Math.pow(distance, 2);
 
         return Math.sqrt(distance);
     }
@@ -160,9 +159,8 @@ public class LocationService extends Service implements
         }
     }
 
-    protected void processLocation(Location location) {
-        double distance = distance(firstLocation.getLatitude(), location.getLatitude(), firstLocation.getLongitude(), location.getLongitude(),
-                0.0, 0.0);
+    void processLocation(Location location) {
+        double distance = distance(firstLocation.getLatitude(), location.getLatitude(), firstLocation.getLongitude(), location.getLongitude());
         if (distance>50) {
             firstLocation = location;
             getNearestMeasurementByLocation(location.getLatitude(), location.getLongitude());
@@ -245,10 +243,8 @@ public class LocationService extends Service implements
         Log.d(TAG, "onConnected");
 
         LocationRequest locationRequest = LocationRequest.create();
-//        locationRequest.setInterval(600000); // milliseconds
-        locationRequest.setInterval(1000); // milliseconds
-//        locationRequest.setFastestInterval(600000); // the fastest rate in milliseconds at which your app can handle location updates
-        locationRequest.setFastestInterval(1000); // the fastest rate in milliseconds at which your app can handle location updates
+        locationRequest.setInterval(600000);
+        locationRequest.setFastestInterval(600000);
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         try {
             LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);

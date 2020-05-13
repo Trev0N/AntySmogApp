@@ -60,6 +60,8 @@ public class SlideshowFragment extends Fragment {
                 requireContext().getApplicationContext().startService(serviceIntent);
             } else {
                 editor.putBoolean("Notification", false);
+                Intent serviceIntent = new Intent(requireContext(), LocationService.class);
+                requireContext().getApplicationContext().stopService(serviceIntent);
                 editor.apply();
             }
 
