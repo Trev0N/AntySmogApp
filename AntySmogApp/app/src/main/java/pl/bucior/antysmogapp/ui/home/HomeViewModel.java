@@ -20,7 +20,7 @@ public class HomeViewModel extends ViewModel {
         return mutableLiveData;
     }
 
-    public void setMutableLiveData(List<MeasurementDto> list) {
+    void setMutableLiveData(List<MeasurementDto> list) {
         Collections.reverse(list);
         this.mutableLiveData.setValue(list);
     }

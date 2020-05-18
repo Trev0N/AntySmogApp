@@ -29,11 +29,6 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
-import org.apache.http.conn.ssl.SSLSocketFactory;
-
-import java.util.concurrent.TimeUnit;
-
-import okhttp3.OkHttpClient;
 import pl.bucior.antysmogapp.MainActivity;
 import pl.bucior.antysmogapp.R;
 import pl.bucior.antysmogapp.api.MeasurementResponse;
@@ -58,8 +53,8 @@ public class LocationService extends Service implements
     @Override
     public void onCreate() {
         super.onCreate();
-        sharedPreferences = this.getSharedPreferences("NotificationPreferences", Context.MODE_PRIVATE);
-        if(sharedPreferences.getBoolean("Notification",false)) {
+        sharedPreferences = getSharedPreferences("NotificationPreferences", Context.MODE_PRIVATE);
+        if(sharedPreferences.contains("Notification") && sharedPreferences.getBoolean("Notification",false)) {
             isServiceRunning=false;
             startServiceAndSendNotification("AntySmogApp","Aplikacja działa w tle", false);
         }
@@ -99,7 +94,7 @@ public class LocationService extends Service implements
                     .setPriority(NotificationManager.IMPORTANCE_HIGH)
                     .setCategory(Notification.CATEGORY_EVENT)
                     .build();
-            notification.flags = notification.flags | Notification.DEFAULT_VIBRATE;     // NO_CLEAR makes the notification stay when the user performs a "delete all" command
+            notification.flags = notification.flags | Notification.DEFAULT_VIBRATE;
             startForeground(NOTIFICATION_ID, notification);
             isServiceRunning = true;
         } else if (isAirBad)  {
@@ -168,13 +163,7 @@ public class LocationService extends Service implements
     }
 
     public void getNearestMeasurementByLocation(double latitude, double longitude) {
-        OkHttpClient okHttpClient = new OkHttpClient().newBuilder()
-                .connectTimeout(120, TimeUnit.SECONDS)
-                .readTimeout(120, TimeUnit.SECONDS)
-                .writeTimeout(120, TimeUnit.SECONDS)
-                .hostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER)
-                .build();
-        AndroidNetworking.initialize(getApplicationContext(), okHttpClient);
+        AndroidNetworking.initialize(getApplicationContext());
 
         final String airUrl = url + "v2/measurements/nearest?lat=" + latitude + "&lng=" + longitude;
         AndroidNetworking.get(airUrl)
@@ -183,7 +172,6 @@ public class LocationService extends Service implements
                 .addHeaders("accept-language", "pl-PL")
                 .addHeaders("Host", "airapi.airly.eu")
                 .setPriority(Priority.HIGH)
-                .setOkHttpClient(okHttpClient)
                 .build()
                 .getAsObject(MeasurementResponse.class, new ParsedRequestListener<MeasurementResponse>() {
                     @SuppressLint("NewApi")

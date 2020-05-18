@@ -50,7 +50,7 @@ public class SlideshowFragment extends Fragment {
         return root;
     }
 
-    public void changeUserPreferences() {
+    private void changeUserPreferences() {
         SharedPreferences.Editor editor = sharedpreferences.edit();
         notification.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (buttonView.isChecked()) {

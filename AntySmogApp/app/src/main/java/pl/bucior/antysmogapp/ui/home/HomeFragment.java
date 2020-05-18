@@ -31,15 +31,11 @@ import com.androidnetworking.interfaces.ParsedRequestListener;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 
-import org.apache.http.conn.ssl.SSLSocketFactory;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.TimeUnit;
 
-import okhttp3.OkHttpClient;
 import pl.bucior.antysmogapp.R;
 import pl.bucior.antysmogapp.api.DataDto;
 import pl.bucior.antysmogapp.api.MeasurementDto;
@@ -88,19 +84,13 @@ public class HomeFragment extends Fragment {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
-    public void getNearestMeasurementByLocation(double latitude, double longitude) {
+    private void getNearestMeasurementByLocation(double latitude, double longitude) {
         if (homeViewModel.getMutableLiveData().getValue() != null &&
                 homeViewModel.getMutableLiveData().getValue().size() > 0) {
             updateUI(homeViewModel.getMutableLiveData().getValue().get(0));
         } else {
             AsyncTask.execute(() -> {
-                OkHttpClient okHttpClient = new OkHttpClient().newBuilder()
-                        .connectTimeout(120, TimeUnit.SECONDS)
-                        .readTimeout(120, TimeUnit.SECONDS)
-                        .writeTimeout(120, TimeUnit.SECONDS)
-                        .hostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER)
-                        .build();
-                AndroidNetworking.initialize(requireContext(), okHttpClient);
+                AndroidNetworking.initialize(requireContext());
 
                 final String airUrl = url + "v2/measurements/nearest?lat=" + latitude + "&lng=" + longitude + "&maxDistanceKM=5";
                 AndroidNetworking.get(airUrl)
@@ -109,7 +99,6 @@ public class HomeFragment extends Fragment {
                         .addHeaders("accept-language", "pl-PL")
                         .addHeaders("Host", "airapi.airly.eu")
                         .setPriority(Priority.HIGH)
-                        .setOkHttpClient(okHttpClient)
                         .build()
                         .getAsObject(MeasurementResponse.class, new ParsedRequestListener<MeasurementResponse>() {
                             @SuppressLint("NewApi")
@@ -132,7 +121,7 @@ public class HomeFragment extends Fragment {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
-    public void updateUI(MeasurementDto measurementDto) {
+    private void updateUI(MeasurementDto measurementDto) {
         if (measurementDto.getValues().size() > 0) {
             homePM1.setText(String.format(new Locale("PL"), "%s µg/m³", measurementDto.getValues().stream().filter(m -> m.getName().equals("PM1")).findAny().orElse(new DataDto("PM1", null)).getValue()));
             homePM25.setText(String.format(new Locale("PL"), "%s µg/m³", measurementDto.getValues().stream().filter(m -> m.getName().equals("PM25")).findAny().orElse(new DataDto("PM25", null)).getValue()));
@@ -158,7 +147,7 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    public void eliminateNulls(){
+    private void eliminateNulls(){
         if(homePM1.getText().toString().contains("null")){
             homePM1.setText(R.string.no_data);
         }
@@ -185,7 +174,7 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    public void getLocationAndSetDataOnUi() {
+    private void getLocationAndSetDataOnUi() {
         FusedLocationProviderClient mFusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
         mFusedLocationClient.getLastLocation()
                 .addOnSuccessListener(requireActivity(), location -> {
@@ -241,22 +230,19 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    public void findLocationByCity() {
-        imageButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Geocoder gcd = new Geocoder(requireContext(), Locale.getDefault());
-                try {
+    private void findLocationByCity() {
+        imageButton.setOnClickListener(v -> {
+            Geocoder gcd = new Geocoder(requireContext(), Locale.getDefault());
+            try {
 
-                    List<Address> address = gcd.getFromLocationName(String.valueOf(homeCityText.getText()), 1);
-                    if (address.size() > 0) {
-                        homeViewModel.setMutableLiveData(new ArrayList<>());
-                        getNearestMeasurementByLocation(address.get(0).getLatitude(), address.get(0).getLongitude());
-                        homeQualityTip.setText(String.format("Wyświetlanie dla miejscowości %s", address.get(0).getLocality()));
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
+                List<Address> address = gcd.getFromLocationName(String.valueOf(homeCityText.getText()), 1);
+                if (address.size() > 0) {
+                    homeViewModel.setMutableLiveData(new ArrayList<>());
+                    getNearestMeasurementByLocation(address.get(0).getLatitude(), address.get(0).getLongitude());
+                    homeQualityTip.setText(String.format("Wyświetlanie dla miejscowości %s", address.get(0).getLocality()));
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         });
     }
