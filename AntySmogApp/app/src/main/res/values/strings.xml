@@ -38,4 +38,5 @@
     <string name="home_city">Wpisz nazwę miejscowości</string>
     <string name="home_ad" >Jeśli chcesz to możesz sprawdzić jakość powietrza w innym miejscu!</string>
     <string name="home_location_show">Wyświetlanie dla twojej lokalizacji</string>
+    <string name="home_location_show_selected">Wyświetlanie dla wybranej lokalizacji</string>
 </resources>

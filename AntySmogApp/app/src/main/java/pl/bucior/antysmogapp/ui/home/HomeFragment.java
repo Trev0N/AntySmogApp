@@ -51,7 +51,7 @@ public class HomeFragment extends Fragment {
     private RatingBar homeRatingBar;
     private TextView homeAddress, homePM1, homePM25, homePM10, homeHumidity, homePressure, homeTemperature, homeGrade, homeTip, homeQualityTip;
     private EditText homeCityText;
-    private ImageButton imageButton;
+    private ImageButton imageButton, imageButton2;
     private Location locationToCheck = null;
     private final static int PERMISSION_ID = 44;
     private MeasurementResponse measurementResponse;
@@ -74,12 +74,14 @@ public class HomeFragment extends Fragment {
         homeRatingBar = root.findViewById(R.id.home_ratingBar);
         homeCityText = root.findViewById(R.id.homeCityText);
         imageButton = root.findViewById(R.id.imageButton);
+        imageButton2 = root.findViewById(R.id.imageButton2);
         homeQualityTip = root.findViewById(R.id.home_quality_tip);
         checkAndRequestPermissions();
         if (locationToCheck == null) {
             getLocationAndSetDataOnUi();
         }
         findLocationByCity();
+        returnToLocalData();
         return root;
     }
 
@@ -234,16 +236,22 @@ public class HomeFragment extends Fragment {
         imageButton.setOnClickListener(v -> {
             Geocoder gcd = new Geocoder(requireContext(), Locale.getDefault());
             try {
-
                 List<Address> address = gcd.getFromLocationName(String.valueOf(homeCityText.getText()), 1);
                 if (address.size() > 0) {
                     homeViewModel.setMutableLiveData(new ArrayList<>());
                     getNearestMeasurementByLocation(address.get(0).getLatitude(), address.get(0).getLongitude());
-                    homeQualityTip.setText(String.format("Wyświetlanie dla miejscowości %s", address.get(0).getLocality()));
+                    homeQualityTip.setText(R.string.home_location_show_selected);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        });
+    }
+    private void returnToLocalData() {
+        imageButton2.setOnClickListener(v -> {
+            homeCityText.setText("");
+            homeQualityTip.setText(R.string.home_location_show);
+            getNearestMeasurementByLocation(locationToCheck.getLatitude(), locationToCheck.getLongitude());
         });
     }
 

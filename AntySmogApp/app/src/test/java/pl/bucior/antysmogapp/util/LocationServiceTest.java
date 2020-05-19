@@ -6,8 +6,6 @@ import android.content.SharedPreferences;
 import android.location.Location;
 import android.util.Log;
 
-import com.androidnetworking.AndroidNetworking;
-import com.androidnetworking.common.ANRequest;
 import com.google.android.gms.common.ConnectionResult;
 
 import org.junit.Before;
@@ -29,7 +27,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Log.class, AndroidNetworking.class, ANRequest.GetRequestBuilder.class})
+@PrepareForTest({Log.class})
 public class LocationServiceTest {
 
     @Mock

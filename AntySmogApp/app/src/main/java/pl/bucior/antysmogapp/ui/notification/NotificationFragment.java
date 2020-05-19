@@ -1,4 +1,4 @@
-package pl.bucior.antysmogapp.ui.slideshow;
+package pl.bucior.antysmogapp.ui.notification;
 
 import android.content.Context;
 import android.content.Intent;
@@ -21,7 +21,7 @@ import androidx.lifecycle.ViewModelProviders;
 import pl.bucior.antysmogapp.R;
 import pl.bucior.antysmogapp.util.LocationService;
 
-public class SlideshowFragment extends Fragment {
+public class NotificationFragment extends Fragment {
 
     private SharedPreferences sharedpreferences;
     private Switch notification;
@@ -29,7 +29,7 @@ public class SlideshowFragment extends Fragment {
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        SlideshowViewModel slideshowViewModel = ViewModelProviders.of(this).get(SlideshowViewModel.class);
+        NotificationViewModel notificationViewModel = ViewModelProviders.of(this).get(NotificationViewModel.class);
         View root = inflater.inflate(R.layout.fragment_notification, container, false);
         sharedpreferences = requireContext().getSharedPreferences("NotificationPreferences", Context.MODE_PRIVATE);
         notification = root.findViewById(R.id.switchNotification);
@@ -41,7 +41,7 @@ public class SlideshowFragment extends Fragment {
             notificationPercent.setText(String.valueOf(sharedpreferences.getInt("Notification_value",0)));
         }
         changeUserPreferences();
-        slideshowViewModel.getText().observe(getViewLifecycleOwner(), new Observer<String>() {
+        notificationViewModel.getText().observe(getViewLifecycleOwner(), new Observer<String>() {
             @Override
             public void onChanged(@Nullable String s) {
 
