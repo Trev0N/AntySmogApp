@@ -29,6 +29,9 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
+import java.util.Calendar;
+import java.util.Date;
+
 import pl.bucior.antysmogapp.MainActivity;
 import pl.bucior.antysmogapp.R;
 import pl.bucior.antysmogapp.api.MeasurementResponse;
@@ -48,6 +51,7 @@ public class LocationService extends Service implements
     private Location firstLocation;
     private MeasurementResponse measurementResponse;
     private SharedPreferences sharedPreferences;
+    private Date notificationDate;
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
@@ -72,63 +76,43 @@ public class LocationService extends Service implements
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     void startServiceAndSendNotification(String textTitle,String text, boolean isAirBad) {
+        Intent notificationIntent = new Intent(getApplicationContext(), MainActivity.class);
+        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        PendingIntent contentPendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+        String NOTIFICATION_CHANNEL_ID = "pl.bucior.antysmogapp";
+        String channelName = "LocationService";
+        NotificationChannel chan = new NotificationChannel(NOTIFICATION_CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_NONE);
+        chan.setLightColor(Color.BLUE);
+        chan.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        assert manager != null;
+        manager.createNotificationChannel(chan);
+        Notification notification = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+                .setOngoing(false)
+                .setContentTitle(textTitle)
+                .setTicker(getResources().getString(R.string.app_name))
+                .setContentIntent(contentPendingIntent)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentText(text)
+                .setPriority(NotificationManager.IMPORTANCE_HIGH)
+                .setCategory(Notification.CATEGORY_EVENT)
+                .build();
         if (!isServiceRunning) {
-            Intent notificationIntent = new Intent(getApplicationContext(), MainActivity.class);
-            notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            PendingIntent contentPendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
-            String NOTIFICATION_CHANNEL_ID = "pl.bucior.antysmogapp";
-            String channelName = "LocationService";
-            NotificationChannel chan = new NotificationChannel(NOTIFICATION_CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_NONE);
-            chan.setLightColor(Color.BLUE);
-            chan.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
-            NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-            assert manager != null;
-            manager.createNotificationChannel(chan);
-            Notification notification = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-                    .setOngoing(false)
-                    .setContentTitle(textTitle)
-                    .setTicker(getResources().getString(R.string.app_name))
-                    .setContentIntent(contentPendingIntent)
-                    .setSmallIcon(R.mipmap.ic_launcher)
-                    .setContentText(text)
-                    .setPriority(NotificationManager.IMPORTANCE_HIGH)
-                    .setCategory(Notification.CATEGORY_EVENT)
-                    .build();
             notification.flags = notification.flags | Notification.DEFAULT_VIBRATE;
             startForeground(NOTIFICATION_ID, notification);
             isServiceRunning = true;
         } else if (isAirBad)  {
-                Intent notificationIntent = new Intent(getApplicationContext(), MainActivity.class);
-                notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                PendingIntent contentPendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
-                String NOTIFICATION_CHANNEL_ID = "pl.bucior.antysmogapp";
-                String channelName = "LocationService";
-                NotificationChannel chan = new NotificationChannel(NOTIFICATION_CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_NONE);
-                chan.setLightColor(Color.BLUE);
-                chan.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
-                NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-                assert manager != null;
-                manager.createNotificationChannel(chan);
-                Notification notification = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-                        .setOngoing(false)
-                        .setContentTitle(textTitle)
-                        .setTicker(getResources().getString(R.string.app_name))
-                        .setContentIntent(contentPendingIntent)
-                        .setSmallIcon(R.mipmap.ic_launcher)
-                        .setContentText(text)
-                        .setPriority(NotificationManager.IMPORTANCE_HIGH)
-                        .setCategory(Notification.CATEGORY_EVENT)
-                        .build();
                 manager.notify(NOTIFICATION_ID, notification);
-
+                Calendar c = Calendar.getInstance();
+                c.setTime(new Date());
+                c.add(Calendar.HOUR,1);
+            notificationDate = c.getTime();
         }
     }
 
     public static double distance(double lat1, double lat2, double lon1,
                                   double lon2) {
-
         final int R = 6371;
-
         double latDistance = Math.toRadians(lat2 - lat1);
         double lonDistance = Math.toRadians(lon2 - lon1);
         double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
@@ -156,7 +140,7 @@ public class LocationService extends Service implements
 
     void processLocation(Location location) {
         double distance = distance(firstLocation.getLatitude(), location.getLatitude(), firstLocation.getLongitude(), location.getLongitude());
-        if (distance>50) {
+        if (distance>100 && notificationDate.after(new Date())) {
             firstLocation = location;
             getNearestMeasurementByLocation(location.getLatitude(), location.getLongitude());
         }
@@ -164,7 +148,6 @@ public class LocationService extends Service implements
 
     public void getNearestMeasurementByLocation(double latitude, double longitude) {
         AndroidNetworking.initialize(getApplicationContext());
-
         final String airUrl = url + "v2/measurements/nearest?lat=" + latitude + "&lng=" + longitude;
         AndroidNetworking.get(airUrl)
                 .addHeaders("Accept", "*/*")
