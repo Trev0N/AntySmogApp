@@ -101,6 +101,10 @@ public class LocationService extends Service implements
             notification.flags = notification.flags | Notification.DEFAULT_VIBRATE;
             startForeground(NOTIFICATION_ID, notification);
             isServiceRunning = true;
+            Calendar c = Calendar.getInstance();
+            c.setTime(new Date());
+            c.add(Calendar.HOUR,1);
+            notificationDate = c.getTime();
         } else if (isAirBad)  {
                 manager.notify(NOTIFICATION_ID, notification);
                 Calendar c = Calendar.getInstance();
@@ -140,7 +144,7 @@ public class LocationService extends Service implements
 
     void processLocation(Location location) {
         double distance = distance(firstLocation.getLatitude(), location.getLatitude(), firstLocation.getLongitude(), location.getLongitude());
-        if (distance>100 && notificationDate.after(new Date())) {
+        if (distance>75 && notificationDate.before(new Date())) {
             firstLocation = location;
             getNearestMeasurementByLocation(location.getLatitude(), location.getLongitude());
         }
